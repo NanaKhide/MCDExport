@@ -28,7 +28,7 @@ public class CharacterDataFactory
             return null;
         }
 
-        var penumbraMods = IpcManager.Penumbra.GetGameObjectResourcePaths(player.ObjectIndex);
+        var penumbraResourcePaths = IpcManager.Penumbra.GetGameObjectResourcePaths(player.ObjectIndex);
         var fileReplacements = new List<FileReplacement>();
         var modDirectory = IpcManager.Penumbra.GetModDirectory();
 
@@ -38,31 +38,75 @@ public class CharacterDataFactory
             return null;
         }
 
-        foreach (var (gamePath, localPath) in penumbraMods)
+        Plugin.Log.Info($"Penumbra Mod Directory: {modDirectory}");
+        Plugin.Log.Info($"Found {penumbraResourcePaths.Length} resource path dictionaries from Penumbra.");
+
+        foreach (var resourceDict in penumbraResourcePaths)
         {
-            var fullPath = Path.IsPathRooted(localPath) ? localPath : Path.Combine(modDirectory, localPath);
-
-            if (!File.Exists(fullPath)) continue;
-
-            var hash = await Task.Run(() => FileHasher.GetFileHash(fullPath));
-            var length = (int)new FileInfo(fullPath).Length;
-
-            var existingReplacement = fileReplacements.FirstOrDefault(f => f.Hash == hash);
-            if (existingReplacement != null)
+            foreach (var (gamePath, localPaths) in resourceDict)
             {
-                existingReplacement.GamePaths.Add(gamePath);
-            }
-            else
-            {
-                fileReplacements.Add(new FileReplacement
+                Plugin.Log.Debug($"Processing game path: {gamePath}");
+                if (!localPaths.Any()) continue;
+
+                string? resolvedPath = null;
+
+                var normalizedGamePath = gamePath.Replace('/', '\\');
+                if (File.Exists(normalizedGamePath))
                 {
-                    Hash = hash,
-                    GamePaths = new List<string> { gamePath },
-                    Length = length,
-                    LocalPath = fullPath
-                });
+                    resolvedPath = normalizedGamePath;
+                    Plugin.Log.Info($"  -> Found valid absolute path from game path: {resolvedPath}");
+                }
+                else
+                {
+                    foreach (var path in localPaths)
+                    {
+                        var normalizedPath = path.Replace('/', '\\');
+
+                        if (File.Exists(normalizedPath))
+                        {
+                            resolvedPath = normalizedPath;
+                            Plugin.Log.Info($"  -> Found valid absolute path: {resolvedPath}");
+                            break;
+                        }
+
+                        var combinedPath = Path.Combine(modDirectory, normalizedPath);
+                        if (File.Exists(combinedPath))
+                        {
+                            resolvedPath = combinedPath;
+                            Plugin.Log.Info($"  -> Found valid combined path: {resolvedPath}");
+                            break;
+                        }
+                    }
+                }
+
+                if (resolvedPath == null)
+                {
+                    Plugin.Log.Warning($"Could not find a valid local file for game path '{gamePath}' from any of the {localPaths.Count + 1} options provided by Penumbra.");
+                    continue;
+                }
+
+                var hash = await Task.Run(() => FileHasher.GetFileHash(resolvedPath));
+                var length = (int)new FileInfo(resolvedPath).Length;
+
+                var existingReplacement = fileReplacements.FirstOrDefault(f => f.Hash == hash);
+                if (existingReplacement != null)
+                {
+                    existingReplacement.GamePaths.Add(gamePath);
+                }
+                else
+                {
+                    fileReplacements.Add(new FileReplacement
+                    {
+                        Hash = hash,
+                        GamePaths = new List<string> { gamePath },
+                        Length = length,
+                        LocalPath = resolvedPath
+                    });
+                }
             }
         }
+
+        Plugin.Log.Info($"Added {fileReplacements.Count} file replacements to the MCDF file.");
 
         return new McdfExporter.Data.CharacterData
         {

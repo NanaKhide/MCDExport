@@ -1,4 +1,4 @@
-using K4os.Compression.LZ4.Legacy; // Using legacy for compatibility
+using K4os.Compression.LZ4.Legacy;
 using McdfExporter.Data;
 using System;
 using System.IO;

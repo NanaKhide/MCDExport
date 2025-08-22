@@ -11,7 +11,7 @@ public class IpcCallerPenumbra : IDisposable
     private readonly GetGameObjectResourcePaths _getResourcePaths;
     private readonly GetPlayerMetaManipulations _getMetaManipulations;
     private readonly ApiVersion _apiVersion;
-    private readonly ICallGateSubscriber<string> _getModDirectory;
+    private readonly GetModDirectory _getModDirectory;
     public bool ApiAvailable { get; private set; }
 
     public IpcCallerPenumbra()
@@ -19,7 +19,7 @@ public class IpcCallerPenumbra : IDisposable
         _getResourcePaths = new GetGameObjectResourcePaths(Plugin.PluginInterface);
         _getMetaManipulations = new GetPlayerMetaManipulations(Plugin.PluginInterface);
         _apiVersion = new ApiVersion(Plugin.PluginInterface);
-        _getModDirectory = Plugin.PluginInterface.GetIpcSubscriber<string>("Penumbra.GetModDirectory");
+        _getModDirectory = new GetModDirectory(Plugin.PluginInterface);
         CheckApi();
     }
 
@@ -41,7 +41,7 @@ public class IpcCallerPenumbra : IDisposable
         if (!ApiAvailable) return string.Empty;
         try
         {
-            return _getModDirectory.InvokeFunc() ?? string.Empty;
+            return _getModDirectory.Invoke() ?? string.Empty;
         }
         catch (Exception e)
         {
@@ -64,34 +64,27 @@ public class IpcCallerPenumbra : IDisposable
         }
     }
 
-    public IReadOnlyDictionary<string, string> GetGameObjectResourcePaths(int objectIndex)
+    public IReadOnlyDictionary<string, IReadOnlyList<string>>[] GetGameObjectResourcePaths(int objectIndex)
     {
-        if (!ApiAvailable) return new Dictionary<string, string>();
+        if (!ApiAvailable) return Array.Empty<IReadOnlyDictionary<string, IReadOnlyList<string>>>();
         try
         {
             var resourcePathsArray = _getResourcePaths.Invoke((ushort)objectIndex);
-            if (resourcePathsArray == null || resourcePathsArray.Length == 0)
-            {
-                return new Dictionary<string, string>();
-            }
+            if (resourcePathsArray == null)
+                return Array.Empty<IReadOnlyDictionary<string, IReadOnlyList<string>>>();
 
-            var combinedPaths = new Dictionary<string, string>();
-            foreach (var resourcePaths in resourcePathsArray)
+            var result = new List<IReadOnlyDictionary<string, IReadOnlyList<string>>>();
+            foreach (var dict in resourcePathsArray)
             {
-                foreach (var (gamePath, localPath) in resourcePaths)
-                {
-                    if (localPath.Any())
-                    {
-                        combinedPaths[gamePath] = localPath.First();
-                    }
-                }
+                var newDict = dict.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value.ToList());
+                result.Add(newDict);
             }
-            return combinedPaths;
+            return result.ToArray();
         }
         catch (Exception e)
         {
             Plugin.Log.Error(e, "Error calling Penumbra.Api.GetGameObjectResourcePaths");
-            return new Dictionary<string, string>();
+            return Array.Empty<IReadOnlyDictionary<string, IReadOnlyList<string>>>();
         }
     }
 
