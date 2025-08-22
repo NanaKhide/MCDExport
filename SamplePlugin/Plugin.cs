@@ -11,6 +11,7 @@ namespace McdfExporter;
 
 public sealed class Plugin : IDalamudPlugin
 {
+    [PluginService] internal static IFramework Framework { get; private set; } = null!;
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;

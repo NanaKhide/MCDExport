@@ -2,7 +2,6 @@ using Penumbra.Api.IpcSubscribers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Dalamud.Plugin.Ipc;
 
 namespace McdfExporter.Services.Ipc;
 
@@ -10,16 +9,16 @@ public class IpcCallerPenumbra : IDisposable
 {
     private readonly GetGameObjectResourcePaths _getResourcePaths;
     private readonly GetPlayerMetaManipulations _getMetaManipulations;
+    private readonly ResolvePlayerPath _resolvePlayerPath;
     private readonly ApiVersion _apiVersion;
-    private readonly GetModDirectory _getModDirectory;
     public bool ApiAvailable { get; private set; }
 
     public IpcCallerPenumbra()
     {
         _getResourcePaths = new GetGameObjectResourcePaths(Plugin.PluginInterface);
         _getMetaManipulations = new GetPlayerMetaManipulations(Plugin.PluginInterface);
+        _resolvePlayerPath = new ResolvePlayerPath(Plugin.PluginInterface);
         _apiVersion = new ApiVersion(Plugin.PluginInterface);
-        _getModDirectory = new GetModDirectory(Plugin.PluginInterface);
         CheckApi();
     }
 
@@ -36,17 +35,17 @@ public class IpcCallerPenumbra : IDisposable
         }
     }
 
-    public string GetModDirectory()
+    public string? ResolvePlayerPath(string gamePath)
     {
-        if (!ApiAvailable) return string.Empty;
+        if (!ApiAvailable) return null;
         try
         {
-            return _getModDirectory.Invoke() ?? string.Empty;
+            return _resolvePlayerPath.Invoke(gamePath);
         }
         catch (Exception e)
         {
-            Plugin.Log.Error(e, "Error calling Penumbra.GetModDirectory");
-            return string.Empty;
+            Plugin.Log.Error(e, $"Error calling Penumbra.ResolvePlayerPath for {gamePath}");
+            return null;
         }
     }
 
@@ -64,27 +63,34 @@ public class IpcCallerPenumbra : IDisposable
         }
     }
 
-    public IReadOnlyDictionary<string, IReadOnlyList<string>>[] GetGameObjectResourcePaths(int objectIndex)
+    public IReadOnlyDictionary<string, string> GetGameObjectResourcePaths(int objectIndex)
     {
-        if (!ApiAvailable) return Array.Empty<IReadOnlyDictionary<string, IReadOnlyList<string>>>();
+        if (!ApiAvailable) return new Dictionary<string, string>();
         try
         {
             var resourcePathsArray = _getResourcePaths.Invoke((ushort)objectIndex);
-            if (resourcePathsArray == null)
-                return Array.Empty<IReadOnlyDictionary<string, IReadOnlyList<string>>>();
-
-            var result = new List<IReadOnlyDictionary<string, IReadOnlyList<string>>>();
-            foreach (var dict in resourcePathsArray)
+            if (resourcePathsArray == null || resourcePathsArray.Length == 0)
             {
-                var newDict = dict.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<string>)kvp.Value.ToList());
-                result.Add(newDict);
+                return new Dictionary<string, string>();
             }
-            return result.ToArray();
+
+            var combinedPaths = new Dictionary<string, string>();
+            foreach (var resourcePaths in resourcePathsArray)
+            {
+                foreach (var (gamePath, localPath) in resourcePaths)
+                {
+                    if (localPath.Any())
+                    {
+                        combinedPaths[gamePath] = localPath.First();
+                    }
+                }
+            }
+            return combinedPaths;
         }
         catch (Exception e)
         {
             Plugin.Log.Error(e, "Error calling Penumbra.Api.GetGameObjectResourcePaths");
-            return Array.Empty<IReadOnlyDictionary<string, IReadOnlyList<string>>>();
+            return new Dictionary<string, string>();
         }
     }
 
