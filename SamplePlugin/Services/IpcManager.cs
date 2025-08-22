@@ -20,7 +20,7 @@ public class IpcManager : IDisposable
     {
         Glamourer.CheckApi();
         Penumbra.CheckApi();
-        // C+ is optional, so we don't check it here for readiness
+        CustomizePlus.CheckApi();
         return Glamourer.ApiAvailable && Penumbra.ApiAvailable;
     }
 

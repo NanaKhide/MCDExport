@@ -1,4 +1,4 @@
-using K4os.Compression.LZ4.Legacy;
+using K4os.Compression.LZ4.Legacy; // Using legacy for compatibility
 using McdfExporter.Data;
 using System;
 using System.IO;
@@ -52,27 +52,23 @@ public class CharaDataFileHandler
                 .GroupBy(f => f.Hash)
                 .ToDictionary(g => g.Key, g => g.First().LocalPath);
 
-            using var fs = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-            using var lz4 = new LZ4Stream(fs, LZ4StreamMode.Compress, LZ4StreamFlags.HighCompression);
-            using var writer = new BinaryWriter(lz4);
-
-            outputHeader.WriteToStream(writer);
-
-            foreach (var item in outputHeader.CharaFileData.Files)
+            using (var fs = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
+            using (var lz4 = new LZ4Stream(fs, LZ4StreamMode.Compress, LZ4StreamFlags.HighCompression))
+            using (var writer = new BinaryWriter(lz4))
             {
-                if (!localFileLookup.TryGetValue(item.Hash, out var localPath) || string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
+                outputHeader.WriteToStream(writer);
+
+                foreach (var item in outputHeader.CharaFileData.Files)
                 {
-                    throw new FileNotFoundException($"Could not find local file for hash {item.Hash}");
+                    if (!localFileLookup.TryGetValue(item.Hash, out var localPath) || string.IsNullOrEmpty(localPath) || !File.Exists(localPath))
+                    {
+                        throw new FileNotFoundException($"Could not find local file for hash {item.Hash}");
+                    }
+
+                    var fileBytes = File.ReadAllBytes(localPath);
+                    writer.Write(fileBytes);
                 }
-
-                var fileBytes = await File.ReadAllBytesAsync(localPath);
-                writer.Write(fileBytes);
             }
-
-            writer.Flush();
-            await lz4.FlushAsync();
-            await fs.FlushAsync();
-            fs.Close();
 
             File.Move(tempFilePath, filePath, true);
         }

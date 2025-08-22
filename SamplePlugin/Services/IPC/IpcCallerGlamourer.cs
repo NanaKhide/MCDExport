@@ -34,7 +34,6 @@ public class IpcCallerGlamourer : IDisposable
         if (!ApiAvailable) return null;
         try
         {
-            
             return _getStateBase64.Invoke(objectIndex).Item2;
         }
         catch (Exception e)

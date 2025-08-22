@@ -2,6 +2,7 @@ using Penumbra.Api.IpcSubscribers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Dalamud.Plugin.Ipc;
 
 namespace McdfExporter.Services.Ipc;
 
@@ -10,6 +11,7 @@ public class IpcCallerPenumbra : IDisposable
     private readonly GetGameObjectResourcePaths _getResourcePaths;
     private readonly GetPlayerMetaManipulations _getMetaManipulations;
     private readonly ApiVersion _apiVersion;
+    private readonly ICallGateSubscriber<string> _getModDirectory;
     public bool ApiAvailable { get; private set; }
 
     public IpcCallerPenumbra()
@@ -17,6 +19,7 @@ public class IpcCallerPenumbra : IDisposable
         _getResourcePaths = new GetGameObjectResourcePaths(Plugin.PluginInterface);
         _getMetaManipulations = new GetPlayerMetaManipulations(Plugin.PluginInterface);
         _apiVersion = new ApiVersion(Plugin.PluginInterface);
+        _getModDirectory = Plugin.PluginInterface.GetIpcSubscriber<string>("Penumbra.GetModDirectory");
         CheckApi();
     }
 
@@ -30,6 +33,20 @@ public class IpcCallerPenumbra : IDisposable
         catch
         {
             ApiAvailable = false;
+        }
+    }
+
+    public string GetModDirectory()
+    {
+        if (!ApiAvailable) return string.Empty;
+        try
+        {
+            return _getModDirectory.InvokeFunc() ?? string.Empty;
+        }
+        catch (Exception e)
+        {
+            Plugin.Log.Error(e, "Error calling Penumbra.GetModDirectory");
+            return string.Empty;
         }
     }
 
@@ -80,4 +97,3 @@ public class IpcCallerPenumbra : IDisposable
 
     public void Dispose() { }
 }
-

@@ -30,13 +30,22 @@ public class CharacterDataFactory
 
         var penumbraMods = IpcManager.Penumbra.GetGameObjectResourcePaths(player.ObjectIndex);
         var fileReplacements = new List<FileReplacement>();
+        var modDirectory = IpcManager.Penumbra.GetModDirectory();
+
+        if (string.IsNullOrEmpty(modDirectory))
+        {
+            Plugin.Log.Error("Could not get Penumbra's mod directory. Aborting export.");
+            return null;
+        }
 
         foreach (var (gamePath, localPath) in penumbraMods)
         {
-            if (!File.Exists(localPath)) continue;
+            var fullPath = Path.IsPathRooted(localPath) ? localPath : Path.Combine(modDirectory, localPath);
 
-            var hash = await Task.Run(() => FileHasher.GetFileHash(localPath));
-            var length = (int)new FileInfo(localPath).Length;
+            if (!File.Exists(fullPath)) continue;
+
+            var hash = await Task.Run(() => FileHasher.GetFileHash(fullPath));
+            var length = (int)new FileInfo(fullPath).Length;
 
             var existingReplacement = fileReplacements.FirstOrDefault(f => f.Hash == hash);
             if (existingReplacement != null)
@@ -50,7 +59,7 @@ public class CharacterDataFactory
                     Hash = hash,
                     GamePaths = new List<string> { gamePath },
                     Length = length,
-                    LocalPath = localPath
+                    LocalPath = fullPath
                 });
             }
         }
