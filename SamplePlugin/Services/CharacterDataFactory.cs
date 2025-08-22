@@ -44,23 +44,24 @@ public class CharacterDataFactory
             var normalizedKey = key.Replace('/', '\\');
             var normalizedValue = value.Replace('/', '\\');
 
-            if (Path.IsPathRooted(normalizedKey) && !Path.IsPathRooted(normalizedValue) && File.Exists(normalizedKey))
-            {
-                resolvedPath = normalizedKey;
-                gamePath = normalizedValue;
-                Plugin.Log.Info($"Found mod file via absolute key for game path '{gamePath}' -> '{resolvedPath}'");
-            }
-            else if (Path.IsPathRooted(normalizedValue) && !Path.IsPathRooted(normalizedKey) && File.Exists(normalizedValue))
+            if (Path.IsPathRooted(normalizedValue) && File.Exists(normalizedValue))
             {
                 resolvedPath = normalizedValue;
                 gamePath = normalizedKey;
                 Plugin.Log.Info($"Found mod file via absolute value for game path '{gamePath}' -> '{resolvedPath}'");
             }
+
+            else if (Path.IsPathRooted(normalizedKey) && File.Exists(normalizedKey))
+            {
+                resolvedPath = normalizedKey;
+                gamePath = normalizedValue;
+                Plugin.Log.Info($"Found mod file via absolute key for game path '{gamePath}' -> '{resolvedPath}'");
+            }
+
             else
             {
-                
                 var resolvedFromKey = IpcManager.Penumbra.ResolvePlayerPath(normalizedKey);
-                if (!string.IsNullOrEmpty(resolvedFromKey) && !resolvedFromKey.Equals(normalizedKey, StringComparison.OrdinalIgnoreCase) && File.Exists(resolvedFromKey))
+                if (!string.IsNullOrEmpty(resolvedFromKey) && Path.IsPathRooted(resolvedFromKey) && File.Exists(resolvedFromKey))
                 {
                     resolvedPath = resolvedFromKey;
                     gamePath = normalizedKey;
@@ -69,7 +70,7 @@ public class CharacterDataFactory
                 else
                 {
                     var resolvedFromValue = IpcManager.Penumbra.ResolvePlayerPath(normalizedValue);
-                    if (!string.IsNullOrEmpty(resolvedFromValue) && !resolvedFromValue.Equals(normalizedValue, StringComparison.OrdinalIgnoreCase) && File.Exists(resolvedFromValue))
+                    if (!string.IsNullOrEmpty(resolvedFromValue) && Path.IsPathRooted(resolvedFromValue) && File.Exists(resolvedFromValue))
                     {
                         resolvedPath = resolvedFromValue;
                         gamePath = normalizedValue;
@@ -83,6 +84,7 @@ public class CharacterDataFactory
                 Plugin.Log.Warning($"Could not resolve mod file from pair: (Key: '{key}', Value: '{value}')");
                 continue;
             }
+
 
             var hash = await Task.Run(() => FileHasher.GetFileHash(resolvedPath));
             var length = (int)new FileInfo(resolvedPath).Length;
