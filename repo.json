@@ -1,0 +1,23 @@
+﻿[
+    {
+        "Author": "your name here",
+        "Name": "MCDFExport", 
+        "InternalName": "GposeUtils",
+        "AssemblyVersion": "{version}",
+        "TestingAssemblyVersion": "{version}",
+        "Description": "A set of useful tools for gposing",
+        "ApplicableVersion": "any",
+        "RepoUrl": "https://github.com/NanaKhide/MCDExport",
+        "Tags": ["gpose", "minion", "utility", "tools"],
+        "DownloadLinkInstall": "https://github.com/NanaKhide/MCDExport/releases/download/v{version}/MCDExport.zip",
+        "DownloadLinkTesting": "https://github.com/NanaKhide/MCDExport/releases/download/v{version}/MCDExport.zip",
+        "DownloadLinkUpdate": "https://github.com/NanaKhide/MCDExport/releases/download/v{version}/MCDExport.zip",
+        "DalamudApiLevel": 13,
+        "LoadRequiredState": 0,
+        "LoadSync": false,
+        "CanUnloadAsync": false,
+        "LoadPriority": 0,
+        "Punchline": "A set of useful tools for gposing",
+        "AcceptsFeedback": false
+    }
+]
