@@ -38,8 +38,8 @@ jobs:
             - name: Zip Release
               uses: TheDoctor0/zip-release@0.6.0
               with:
-                  filename: '../../../MCDExport.zip'
-                  directory: './bin/x64/Release/'
+                  filename: '../../../../MCDExport.zip'
+                  directory: './MCDExport/bin/x64/Release/'
                   exclusions: 'MCDExport MCDExport/*'
 
             - name: Upload Release
