@@ -67,6 +67,6 @@ public record MareCharaFileHeader(byte Version, MareCharaFileData CharaFileData)
         [JsonPropertyName("Hash")]
         public string Hash { get; set; } = string.Empty;
         [JsonPropertyName("Length")]
-        public int Length { get; set; } 
+        public int Length { get; set; }
     }
 }

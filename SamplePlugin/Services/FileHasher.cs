@@ -16,9 +16,9 @@ public static class FileHasher
             return hash;
         }
 
-        using var sha1 = SHA1.Create();
+        using var sha256 = SHA256.Create();
         using var stream = File.OpenRead(filePath);
-        var newHash = BitConverter.ToString(sha1.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+        var newHash = BitConverter.ToString(sha256.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
         _hashCache[filePath] = newHash;
         return newHash;
     }

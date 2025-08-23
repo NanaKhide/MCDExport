@@ -1,4 +1,3 @@
-using Dalamud.Game.ClientState.Objects.Types;
 using McdfExporter.Data;
 using System;
 using System.Collections.Generic;
@@ -29,82 +28,35 @@ public class CharacterDataFactory
             return null;
         }
 
-        var penumbraMods = IpcManager.Penumbra.GetGameObjectResourcePaths(player.ObjectIndex);
+        var penumbraMods = IpcManager.Penumbra.GetCharacterData(player.ObjectIndex);
+        if (penumbraMods == null)
+        {
+            Plugin.Log.Error("Failed to get Penumbra data. Aborting export.");
+            return null;
+        }
+
         var fileReplacements = new List<FileReplacement>();
 
         Plugin.Log.Info($"Found {penumbraMods.Count} potential mod associations from Penumbra. Resolving...");
 
-        foreach (var (key, value) in penumbraMods)
+        foreach (var (resolvedPath, gamePaths) in penumbraMods)
         {
-            await Task.Delay(1);
-
-            string? resolvedPath = null;
-            string? gamePath = null;
-
-            var normalizedKey = key.Replace('/', '\\');
-            var normalizedValue = value.Replace('/', '\\');
-
-            if (Path.IsPathRooted(normalizedValue) && File.Exists(normalizedValue))
+            if (string.IsNullOrEmpty(resolvedPath) || !File.Exists(resolvedPath) || gamePaths.Count == 0)
             {
-                resolvedPath = normalizedValue;
-                gamePath = normalizedKey;
-                Plugin.Log.Info($"Found mod file via absolute value for game path '{gamePath}' -> '{resolvedPath}'");
-            }
-
-            else if (Path.IsPathRooted(normalizedKey) && File.Exists(normalizedKey))
-            {
-                resolvedPath = normalizedKey;
-                gamePath = normalizedValue;
-                Plugin.Log.Info($"Found mod file via absolute key for game path '{gamePath}' -> '{resolvedPath}'");
-            }
-
-            else
-            {
-                var resolvedFromKey = IpcManager.Penumbra.ResolvePlayerPath(normalizedKey);
-                if (!string.IsNullOrEmpty(resolvedFromKey) && Path.IsPathRooted(resolvedFromKey) && File.Exists(resolvedFromKey))
-                {
-                    resolvedPath = resolvedFromKey;
-                    gamePath = normalizedKey;
-                    Plugin.Log.Info($"Found mod file by resolving key for game path '{gamePath}' -> '{resolvedPath}'");
-                }
-                else
-                {
-                    var resolvedFromValue = IpcManager.Penumbra.ResolvePlayerPath(normalizedValue);
-                    if (!string.IsNullOrEmpty(resolvedFromValue) && Path.IsPathRooted(resolvedFromValue) && File.Exists(resolvedFromValue))
-                    {
-                        resolvedPath = resolvedFromValue;
-                        gamePath = normalizedValue;
-                        Plugin.Log.Info($"Found mod file by resolving value for game path '{gamePath}' -> '{resolvedPath}'");
-                    }
-                }
-            }
-
-            if (string.IsNullOrEmpty(resolvedPath) || string.IsNullOrEmpty(gamePath))
-            {
-                Plugin.Log.Warning($"Could not resolve mod file from pair: (Key: '{key}', Value: '{value}')");
+                Plugin.Log.Warning($"Could not resolve game paths for: '{string.Join(", ", gamePaths)}'");
                 continue;
             }
-
 
             var hash = await Task.Run(() => FileHasher.GetFileHash(resolvedPath));
             var length = (int)new FileInfo(resolvedPath).Length;
 
-            var existingReplacement = fileReplacements.FirstOrDefault(f => f.Hash == hash);
-            if (existingReplacement != null)
+            fileReplacements.Add(new FileReplacement
             {
-                if (!existingReplacement.GamePaths.Contains(gamePath))
-                    existingReplacement.GamePaths.Add(gamePath);
-            }
-            else
-            {
-                fileReplacements.Add(new FileReplacement
-                {
-                    Hash = hash,
-                    GamePaths = new List<string> { gamePath },
-                    Length = length,
-                    LocalPath = resolvedPath
-                });
-            }
+                Hash = hash,
+                GamePaths = gamePaths.ToList(),
+                Length = length,
+                LocalPath = resolvedPath
+            });
         }
 
         Plugin.Log.Info($"Added {fileReplacements.Count} unique mod files to the MCDF file.");

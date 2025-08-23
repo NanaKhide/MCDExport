@@ -3,7 +3,6 @@ using McdfExporter.Data;
 using System;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace McdfExporter.Services;
@@ -31,7 +30,13 @@ public class CharaDataFileHandler
 
             var groupedFileReplacements = data.FileReplacements
                 .GroupBy(f => f.Hash)
-                .Select(g => g.First())
+                .Select(g => new FileReplacement
+                {
+                    Hash = g.Key,
+                    GamePaths = g.SelectMany(fr => fr.GamePaths).Distinct().ToList(),
+                    Length = g.First().Length,
+                    LocalPath = g.First().LocalPath
+                })
                 .ToList();
 
             var mareCharaFileData = new MareCharaFileData
@@ -42,7 +47,7 @@ public class CharaDataFileHandler
                 ManipulationData = data.ManipulationData,
                 Files = groupedFileReplacements.Select(f => new MareCharaFileHeader.FileData
                 {
-                    GamePaths = data.FileReplacements.Where(fr => fr.Hash == f.Hash).SelectMany(fr => fr.GamePaths).Distinct().ToArray(),
+                    GamePaths = f.GamePaths.ToArray(),
                     Hash = f.Hash,
                     Length = f.Length
                 }).ToList()
@@ -50,28 +55,27 @@ public class CharaDataFileHandler
 
             var outputHeader = new MareCharaFileHeader(MareCharaFileHeader.CurrentVersion, mareCharaFileData);
 
-            using var fs = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None);
-            using var lz4 = new LZ4Stream(fs, LZ4StreamMode.Compress, LZ4StreamFlags.HighCompression);
-            using var writer = new BinaryWriter(lz4);
-
-            outputHeader.WriteToStream(writer);
-
-            foreach (var item in outputHeader.CharaFileData.Files)
+            using (var fs = new FileStream(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
             {
-                var fileReplacement = groupedFileReplacements.First(f => f.Hash == item.Hash);
-                if (string.IsNullOrEmpty(fileReplacement.LocalPath) || !File.Exists(fileReplacement.LocalPath))
+                using (var lz4 = new LZ4Stream(fs, LZ4StreamMode.Compress, LZ4StreamFlags.HighCompression))
                 {
-                    throw new FileNotFoundException($"Could not find local file for hash {item.Hash}");
+                    using (var writer = new BinaryWriter(lz4))
+                    {
+                        outputHeader.WriteToStream(writer);
+
+                        foreach (var item in groupedFileReplacements)
+                        {
+                            if (string.IsNullOrEmpty(item.LocalPath) || !File.Exists(item.LocalPath))
+                            {
+                                throw new FileNotFoundException($"Could not find local file for hash {item.Hash}");
+                            }
+
+                            var fileBytes = await File.ReadAllBytesAsync(item.LocalPath);
+                            writer.Write(fileBytes);
+                        }
+                    }
                 }
-
-                var fileBytes = await File.ReadAllBytesAsync(fileReplacement.LocalPath);
-                writer.Write(fileBytes);
             }
-
-            writer.Flush();
-            await lz4.FlushAsync();
-            await fs.FlushAsync();
-            fs.Close();
 
             File.Move(tempFilePath, filePath, true);
         }
