@@ -2,7 +2,7 @@
     {
       "Author": "your name here",
       "Name": "MCDFExport",
-      "InternalName": "MCDFExport",
+      "InternalName": "MCDExport",
       "AssemblyVersion": "1.0.0",
       "TestingAssemblyVersion": "1.0.0",
       "Description": "Allows you to export your character as a MCDF File.",
