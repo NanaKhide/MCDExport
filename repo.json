@@ -1,0 +1,23 @@
+﻿[
+    {
+        "Author": "Cazzar",
+        "Name": "GPose Utils",
+        "InternalName": "GposeUtils",
+        "AssemblyVersion": "{version}",
+        "TestingAssemblyVersion": "{version}",
+        "Description": "A set of useful tools for gposing",
+        "ApplicableVersion": "any",
+        "RepoUrl": "https://github.com/Cazzar/GposeUtils",
+        "Tags": ["gpose", "minion", "utility", "tools"],
+        "DownloadLinkInstall": "https://github.com/Cazzar/GposeUtils/releases/download/v{version}/GposeUtils.zip",
+        "DownloadLinkTesting": "https://github.com/Cazzar/GposeUtils/releases/download/v{version}/GposeUtils.zip",
+        "DownloadLinkUpdate": "https://github.com/Cazzar/GposeUtils/releases/download/v{version}/GposeUtils.zip",
+        "DalamudApiLevel": 13,
+        "LoadRequiredState": 0,
+        "LoadSync": false,
+        "CanUnloadAsync": false,
+        "LoadPriority": 0,
+        "Punchline": "A set of useful tools for gposing",
+        "AcceptsFeedback": false
+    }
+]
