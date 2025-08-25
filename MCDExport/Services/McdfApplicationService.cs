@@ -36,27 +36,43 @@ namespace McdfExporter.Services
                     return null;
                 }
 
-                //Revert Char before to default game state
-                _ipcManager.Glamourer.RevertState(character.ObjectIndex);
-                Plugin.Log.Info($"Reverted Glamourer state for {character.Name}");
-
                 var data = reader.GetData();
                 var extractedFiles = reader.ExtractFiles(tempDir);
+                // timing changes cause stuff doesnt like how i do it
+                // penumbra on background thread first
                 collectionId = _ipcManager.Penumbra.CreateTemporaryCollection($"MCDF_{character.Name}_{character.GameObjectId}");
                 Plugin.Log.Info($"Created temporary collection {collectionId} for {character.Name}");
-
                 _ipcManager.Penumbra.AssignTemporaryCollection(collectionId, character.ObjectIndex, true);
                 _ipcManager.Penumbra.AddTemporaryMod("MCDF_Files", collectionId, extractedFiles, data.ManipulationData);
                 Plugin.Log.Info($"Applied Penumbra mods for {character.Name}");
 
-                _ipcManager.Glamourer.ApplyState(data.GlamourerData, character.ObjectIndex);
-                Plugin.Log.Info($"Applied Glamourer state for {character.Name}");
-
-                if (character is ICharacter chara)
+                // REVERT THE CHARACTER FIRST
+                // also on main thread cause.... Idk man something crashed me
+                await _framework.RunOnFrameworkThread(() =>
                 {
-                    _ipcManager.CustomizePlus.SetTemporaryProfile(chara.ObjectIndex, data.CustomizePlusData);
-                    Plugin.Log.Info($"Applied Customize+ profile for {character.Name}");
-                }
+                    _ipcManager.Glamourer.RevertState(character.ObjectIndex);
+                    _ipcManager.CustomizePlus.RemoveTemporaryProfile(character.ObjectIndex);
+                    Plugin.Log.Info($"Reverted character {character.Name} to base state.");
+                });
+
+                // let glamourer cook
+                await Task.Delay(100);
+
+                //apply glamourer and customize after
+                await _framework.RunOnFrameworkThread(() =>
+                {
+                    _ipcManager.Glamourer.ApplyState(data.GlamourerData, character.ObjectIndex);
+                    Plugin.Log.Info($"Applied Glamourer state for {character.Name}");
+
+                    if (character is ICharacter chara)
+                    {
+                        _ipcManager.CustomizePlus.SetTemporaryProfile(chara.ObjectIndex, data.CustomizePlusData);
+                        Plugin.Log.Info($"Applied Customize+ profile for {character.Name}");
+                    }
+                });
+
+                // let everything else cook and redraw after
+                await Task.Delay(100);
 
                 await RedrawAndWait(character);
 
