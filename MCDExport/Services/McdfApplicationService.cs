@@ -36,6 +36,10 @@ namespace McdfExporter.Services
                     return null;
                 }
 
+                //Revert Char before to default game state
+                _ipcManager.Glamourer.RevertState(character.ObjectIndex);
+                Plugin.Log.Info($"Reverted Glamourer state for {character.Name}");
+
                 var data = reader.GetData();
                 var extractedFiles = reader.ExtractFiles(tempDir);
                 collectionId = _ipcManager.Penumbra.CreateTemporaryCollection($"MCDF_{character.Name}_{character.GameObjectId}");

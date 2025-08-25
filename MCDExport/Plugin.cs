@@ -177,7 +177,7 @@ namespace McdfExporter
                     else
                     {
                         Log.Error($"Failed to apply MCDF for {key}. Removing from active list.");
-                        _activeApplications.Remove(key);
+                        await Framework.RunOnFrameworkThread(() => _activeApplications.Remove(key));
                     }
                 }
                 finally
