@@ -1,25 +1,27 @@
-{
-  "Author": "your name here",
-  "Name": "MCDFExport",
-  "InternalName": "MCDExport",
-  "AssemblyVersion": "1.0.0",
-  "TestingAssemblyVersion": "1.1.0-alpha",
-  "Description": "Allows you to export your character as a MCDF File.",
-  "ApplicableVersion": "any",
-  "RepoUrl": "https://github.com/CNanaKhide/MCDExport",
-  "Tags": [
-    "gpose",
-    "utility",
-    "tools"
-  ],
-  "DownloadLinkInstall": "https://github.com/NanaKhide/MCDExport/releases/download/v1.0.0/MCDExport.zip",
-  "DownloadLinkTesting": "https://github.com/NanaKhide/MCDExport/releases/download/dev-v1.1.0-alpha/MCDExport.zip",
-  "DownloadLinkUpdate": "https://github.com/NanaKhide/MCDExport/releases/download/v1.0.0/MCDExport.zip",
-  "DalamudApiLevel": 13,
-  "LoadRequiredState": 0,
-  "LoadSync": false,
-  "CanUnloadAsync": false,
-  "LoadPriority": 0,
-  "Punchline": "Rest well little moon ♥",
-  "AcceptsFeedback": false
-}
+[
+    {
+      "Author": "your name here",
+      "Name": "MCDFExport",
+      "InternalName": "MCDExport",
+      "AssemblyVersion": "1.0.0",
+      "TestingAssemblyVersion": "1.1.0-alpha",
+      "Description": "Allows you to export your character as a MCDF File.",
+      "ApplicableVersion": "any",
+      "RepoUrl": "https://github.com/CNanaKhide/MCDExport",
+      "Tags": [
+        "gpose",
+        "utility",
+        "tools"
+      ],
+      "DownloadLinkInstall": "https://github.com/NanaKhide/MCDExport/releases/download/v1.0.0/MCDExport.zip",
+      "DownloadLinkTesting": "https://github.com/NanaKhide/MCDExport/releases/download/dev-v1.1.0-alpha/MCDExport.zip",
+      "DownloadLinkUpdate": "https://github.com/NanaKhide/MCDExport/releases/download/v1.0.0/MCDExport.zip",
+      "DalamudApiLevel": 13,
+      "LoadRequiredState": 0,
+      "LoadSync": false,
+      "CanUnloadAsync": false,
+      "LoadPriority": 0,
+      "Punchline": "Rest well little moon ♥",
+      "AcceptsFeedback": false
+    }
+]
