@@ -12,4 +12,5 @@ https://github.com/xivdev/Penumbra
 Their respective licenses apply.
 
 # This is the dev branch, you dont need anything here! Please leave and return to the main branch.
-// Known issues, Crash when leacing and returning to a registered character
+
+// Known issues, Crash when leave and returning to a registered character
