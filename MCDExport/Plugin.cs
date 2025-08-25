@@ -1,6 +1,5 @@
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Command;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
