@@ -20,21 +20,30 @@ if ($args[0] -notin "testing", "release") {
 }
 
 # Read the contents of "repo.json" as a JSON object
-$repo = Get-Content -Raw -Path "repo.json" | ConvertFrom-Json
+$repoArray = @(Get-Content -Raw -Path "repo.json" | ConvertFrom-Json)
+
+# Find the MCDExport entry
+$mcdExport = $repoArray | Where-Object { $_.InternalName -eq "MCDExport" }
+
+if ($null -eq $mcdExport) {
+    Write-Error "Could not find MCDExport entry in repo.json"
+    exit 1
+}
 
 #if arg 1 is "testing" then update "DownloadLinkTesting" and "TestingAssemblyVersion"
 if ($args[0] -eq "testing") {
-    $repo.DownloadLinkTesting = "https://github.com/NanaKhide/MCDExport/releases/download/v$($args[1])/MCDExport.zip"
-    $repo.TestingAssemblyVersion = $args[1]
+    $mcdExport.DownloadLinkTesting = "https://github.com/NanaKhide/MCDExport/releases/download/v$($args[1])/MCDExport.zip"
+    $mcdExport.TestingAssemblyVersion = $args[1]
 }
 
 #if arg 1 is "release" then update "DownloadLinkInstall" and "AssemblyVersion"
 if ($args[0] -eq "release") {
-    $repo.DownloadLinkInstall = "https://github.com/NanaKhide/MCDExport/releases/download/v$($args[1])/MCDExport.zip"
-    $repo.DownloadLinkUpdate = "https://github.com/NanaKhide/MCDExport/releases/download/v$($args[1])/MCDExport.zip"
-    $repo.DownloadLinkTesting = "https://github.com/NanaKhide/MCDExport/releases/download/v$($args[1])/MCDExport.zip"
-    $repo.AssemblyVersion = $args[1]
+    $mcdExport.DownloadLinkInstall = "https://github.com/NanaKhide/MCDExport/releases/download/v$($args[1])/MCDExport.zip"
+    $mcdExport.DownloadLinkUpdate = "https://github.com/NanaKhide/MCDExport/releases/download/v$($args[1])/MCDExport.zip"
+    $mcdExport.DownloadLinkTesting = "https://github.com/NanaKhide/MCDExport/releases/download/v$($args[1])/MCDExport.zip"
+    $mcdExport.AssemblyVersion = $args[1]
+    $mcdExport.TestingAssemblyVersion = $args[1]
 }
 
 # Convert the JSON object back to a JSON string
-$repo | ConvertTo-Json -Depth 100 | Set-Content -Path "repo.json"
+ConvertTo-Json -Depth 100 -InputObject @($repoArray) | Set-Content -Path "repo.json"
