@@ -51,10 +51,11 @@ jobs:
             - name: Update Release
               uses: ncipollo/release-action@v1
               with:
-                  tag: ${{ github.ref }}
-                  allowUpdates: true
-                  artifacts: "./MCDExport.zip"
-                  generateReleaseNotes: true
+                tag: ${{ github.ref_name }}  # Changed from github.ref
+                allowUpdates: true
+                artifacts: "./MCDExport.zip"
+                generateReleaseNotes: true
+                updateOnlyUnreleased: false
 
             - name: Update repo.json
               run: |
