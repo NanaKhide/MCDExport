@@ -17,6 +17,7 @@
     "DownloadLinkTesting": "https://github.com/NanaKhide/MCDExport/releases/download/v1.0.2/MCDExport.zip",
     "DownloadLinkUpdate": "https://github.com/NanaKhide/MCDExport/releases/download/v1.0.0/MCDExport.zip",
     "DalamudApiLevel": 13,
+    "TestingDalamudApiLevel": 13,
     "LoadRequiredState": 0,
     "LoadSync": false,
     "CanUnloadAsync": false,
