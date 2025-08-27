@@ -36,7 +36,9 @@ jobs:
               run: dotnet restore MCDExport.sln
 
             - name: Build MCDExport
-              run: dotnet build MCDExport.sln --no-restore /p:Configuration=Release /p:Version=${{ github.event.release.tag_name }}
+              run: |
+                  $version = '${{ github.ref_name }}'.TrimStart('v')
+                  dotnet build MCDExport.sln --no-restore /p:Configuration=Release /p:Version=$version
 
             - name: Zip Release
               uses: TheDoctor0/zip-release@0.6.0
@@ -64,5 +66,5 @@ jobs:
                   ./.github/tools/update-repo.ps1 release $ver
 
                   git add repo.json
-                  git commit -m "[CI] Updating versions for ${{ github.event.release.tag_name }}" || true
+                  git commit -m "[CI] Updating versions for ${{ github.ref_name }}" || true
                   git push origin master || true
