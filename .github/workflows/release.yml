@@ -12,6 +12,8 @@ on:
 
 jobs:
     build:
+        # Only run if the release is a release
+        if: github.event.release.prerelease == false
         runs-on: windows-latest
         permissions:
             contents: write
@@ -51,7 +53,7 @@ jobs:
             - name: Update Release
               uses: ncipollo/release-action@v1
               with:
-                tag: ${{ github.ref_name }}  # Changed from github.ref
+                tag: ${{ github.ref_name }}
                 allowUpdates: true
                 artifacts: "./MCDExport.zip"
                 generateReleaseNotes: true
@@ -62,7 +64,7 @@ jobs:
                   git config --global user.name "Actions User"
                   git config --global user.email "actions@github.com"
                   git fetch origin master && git checkout master
-                  $ver = '${{ github.ref }}'
+                  $ver = '${{ github.ref_name }}'.TrimStart('v')
 
                   ./.github/tools/update-repo.ps1 release $ver
 
