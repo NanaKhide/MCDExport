@@ -64,7 +64,7 @@ jobs:
                   git fetch origin master && git checkout master
                   $ver = '${{ github.ref_name }}'.TrimStart('v')
 
-                  ./.github/tools/update-repo.ps1 release $ver
+                  ./.github/tools/update-repo.ps1 testing $ver
 
                   git add repo.json
                   git commit -m "[CI] Updating versions for ${{ github.ref_name }}" || true
