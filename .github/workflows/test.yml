@@ -1,4 +1,4 @@
-name: Release MCDExport
+name: Testing MCDExport
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
