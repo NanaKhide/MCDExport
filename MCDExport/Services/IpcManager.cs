@@ -1,33 +1,39 @@
+using Dalamud.Plugin;
 using McdfExporter.Services.Ipc;
 using System;
 
-namespace McdfExporter.Services;
-
-public class IpcManager : IDisposable
+namespace McdfExporter.Services
 {
-    public readonly IpcCallerGlamourer Glamourer;
-    public readonly IpcCallerPenumbra Penumbra;
-    public readonly IpcCallerCustomizePlus CustomizePlus;
-
-    public IpcManager()
+    public class IpcManager : IDisposable
     {
-        Glamourer = new IpcCallerGlamourer();
-        Penumbra = new IpcCallerPenumbra();
-        CustomizePlus = new IpcCallerCustomizePlus();
-    }
+        public readonly IpcCallerGlamourer Glamourer;
+        public readonly IpcCallerPenumbra Penumbra;
+        public readonly IpcCallerCustomizePlus CustomizePlus;
 
-    public bool IsIpcReady()
-    {
-        Glamourer.CheckApi();
-        Penumbra.CheckApi();
-        CustomizePlus.CheckApi();
-        return Glamourer.ApiAvailable && Penumbra.ApiAvailable;
-    }
+        public IpcManager(IDalamudPluginInterface dalamudPluginInterface)
+        {
+            Glamourer = new IpcCallerGlamourer();
+            Penumbra = new IpcCallerPenumbra(dalamudPluginInterface);
+            CustomizePlus = new IpcCallerCustomizePlus(dalamudPluginInterface);
+        }
 
-    public void Dispose()
-    {
-        Glamourer.Dispose();
-        Penumbra.Dispose();
-        CustomizePlus.Dispose();
+        public void CheckApis()
+        {
+            Glamourer.CheckApi();
+            Penumbra.CheckApi();
+            CustomizePlus.CheckApi();
+        }
+
+        public bool AllApisAvailable()
+        {
+            return Glamourer.ApiAvailable && Penumbra.ApiAvailable && CustomizePlus.ApiAvailable;
+        }
+
+        public void Dispose()
+        {
+            Glamourer.Dispose();
+            Penumbra.Dispose();
+            CustomizePlus.Dispose();
+        }
     }
 }

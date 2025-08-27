@@ -7,11 +7,9 @@ namespace McdfExporter.Services;
 
 public static class FileHasher
 {
-    private static readonly Dictionary<string, string> _hashCache = new();
-
-    public static string GetFileHash(string filePath)
+    public static string GetFileHash(string filePath, Dictionary<string, string> cache)
     {
-        if (_hashCache.TryGetValue(filePath, out var hash))
+        if (cache.TryGetValue(filePath, out var hash))
         {
             return hash;
         }
@@ -19,7 +17,7 @@ public static class FileHasher
         using var sha256 = SHA256.Create();
         using var stream = File.OpenRead(filePath);
         var newHash = BitConverter.ToString(sha256.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
-        _hashCache[filePath] = newHash;
+        cache[filePath] = newHash;
         return newHash;
     }
 }

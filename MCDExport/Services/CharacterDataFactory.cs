@@ -36,6 +36,7 @@ public class CharacterDataFactory
         }
 
         var fileReplacements = new List<FileReplacement>();
+        var hashCache = new Dictionary<string, string>();
 
         Plugin.Log.Info($"Found {penumbraMods.Count} potential mod associations from Penumbra. Resolving...");
 
@@ -47,7 +48,7 @@ public class CharacterDataFactory
                 continue;
             }
 
-            var hash = await Task.Run(() => FileHasher.GetFileHash(resolvedPath));
+            var hash = await Task.Run(() => FileHasher.GetFileHash(resolvedPath, hashCache));
             var length = (int)new FileInfo(resolvedPath).Length;
 
             fileReplacements.Add(new FileReplacement
