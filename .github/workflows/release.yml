@@ -1,21 +1,26 @@
 ﻿name: Release MCDExport
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+#run the workflow when a release is created with "v*" in the tag
 on:
-    workflow_dispatch:
-        inputs:
-            version:
-                description: "Version tag to create (ex: 0.1.2)"
-                required: true
+  release:
+    types: [created]
+
 
 jobs:
     build:
+        # Only run if the release is a release
+        if: github.event.release.prerelease == false
         runs-on: windows-latest
         permissions:
             contents: write
-        
+
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
               with:
                   fetch-depth: 0
 
@@ -33,7 +38,9 @@ jobs:
               run: dotnet restore MCDExport.sln
 
             - name: Build MCDExport
-              run: dotnet build MCDExport.sln --no-restore /p:Configuration=Release /p:Version=${{ github.event.inputs.version }}
+              run: |
+                  $version = '${{ github.ref_name }}'.TrimStart('v')
+                  dotnet build MCDExport.sln --no-restore /p:Configuration=Release /p:Version=$version
 
             - name: Zip Release
               uses: TheDoctor0/zip-release@0.6.0
@@ -42,28 +49,25 @@ jobs:
                   directory: './MCDExport/bin/x64/Release/'
                   exclusions: 'MCDExport MCDExport/*'
 
-            - name: Upload Release
+            # Update the release adding the zip file
+            - name: Update Release
               uses: ncipollo/release-action@v1
               with:
-                  allowUpdates: true
-                  artifacts: "./MCDExport.zip"
-                  name: MCDExport v${{ github.event.inputs.version }}
-                  tag: v${{ github.event.inputs.version }}
-                  draft: false
-                  token: ${{ secrets.GITHUB_TOKEN }}
-                  commit: ${{ vars.GITHUB_SHA }}
+                tag: ${{ github.ref_name }}
+                allowUpdates: true
+                artifacts: "./MCDExport.zip"
+                generateReleaseNotes: true
+                updateOnlyUnreleased: false
 
             - name: Update repo.json
               run: |
                   git config --global user.name "Actions User"
                   git config --global user.email "actions@github.com"
                   git fetch origin master && git checkout master
-                  $ver = '${{ github.event.inputs.version }}'
-                  $path = './Resources/Templates/repo.tmpl'
-                  $new_path = './repo.json'
-                  $content = get-content -path $path
-                  $content = $content -replace '{version}',$ver
-                  set-content -Path $new_path -Value $content
+                  $ver = '${{ github.ref_name }}'.TrimStart('v')
+
+                  ./.github/tools/update-repo.ps1 release $ver
+
                   git add repo.json
-                  git commit -m "[CI] Updating versions for v${{ github.event.inputs.version }}" || true
+                  git commit -m "[CI] Updating versions for ${{ github.ref_name }}" || true
                   git push origin master || true
