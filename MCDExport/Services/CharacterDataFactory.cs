@@ -1,8 +1,7 @@
 using McdfExporter.Data;
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace McdfExporter.Services;
@@ -16,7 +15,7 @@ public class CharacterDataFactory
         IpcManager = ipcManager;
     }
 
-    public async Task<McdfExporter.Data.CharacterData?> CreateCharacterData()
+    public async Task<CharacterData?> CreateCharacterData(ExportProgress progress)
     {
         var player = Plugin.ClientState.LocalPlayer;
         if (player == null) return null;
@@ -35,31 +34,34 @@ public class CharacterDataFactory
             return null;
         }
 
-        var fileReplacements = new List<FileReplacement>();
+        Plugin.Log.Verbose($"Found {penumbraMods.Count} potential mod associations from Penumbra. Resolving...");
 
-        Plugin.Log.Info($"Found {penumbraMods.Count} potential mod associations from Penumbra. Resolving...");
-
-        foreach (var (resolvedPath, gamePaths) in penumbraMods)
+        var validMods = penumbraMods
+            .Where(mod => !string.IsNullOrEmpty(mod.Key) && File.Exists(mod.Key) && mod.Value.Any())
+            .ToList();
+        progress.Message = "Processing mod files...";
+        progress.TotalFiles = validMods.Count;
+        progress.FilesProcessed = 0;
+        var processingTasks = validMods.Select(async mod =>
         {
-            if (string.IsNullOrEmpty(resolvedPath) || !File.Exists(resolvedPath) || gamePaths.Count == 0)
-            {
-                Plugin.Log.Warning($"Could not resolve game paths for: '{string.Join(", ", gamePaths)}'");
-                continue;
-            }
-
+            var (resolvedPath, gamePaths) = mod;
             var hash = await Task.Run(() => FileHasher.GetFileHash(resolvedPath));
             var length = (int)new FileInfo(resolvedPath).Length;
 
-            fileReplacements.Add(new FileReplacement
+            Interlocked.Increment(ref progress.FilesProcessed);
+
+            return new FileReplacement
             {
                 Hash = hash,
                 GamePaths = gamePaths.ToList(),
                 Length = length,
                 LocalPath = resolvedPath
-            });
-        }
+            };
+        }).ToList();
 
-        Plugin.Log.Info($"Added {fileReplacements.Count} unique mod files to the MCDF file.");
+        var fileReplacements = (await Task.WhenAll(processingTasks)).ToList();
+
+        Plugin.Log.Verbose($"Added {fileReplacements.Count} unique mod files to the MCDF file.");
 
         return new McdfExporter.Data.CharacterData
         {
