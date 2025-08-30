@@ -10,8 +10,9 @@ namespace McdfExporter.Windows
     {
         private readonly ExportWindow _exportWindow;
         private readonly RegisteredCharactersWindow _registeredCharactersWindow;
+        private readonly DebugWindow _debugWindow;
 
-        public MainWindow(Plugin plugin, CharaDataFileHandler charaDataFileHandler, RegistrationService registrationService)
+        public MainWindow(Plugin plugin, CharaDataFileHandler charaDataFileHandler, RegistrationService registrationService, AutoApplyService autoApplyService)
             : base("MCDF Exporter", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
         {
             SizeConstraints = new WindowSizeConstraints
@@ -22,6 +23,7 @@ namespace McdfExporter.Windows
 
             _exportWindow = new ExportWindow(plugin, charaDataFileHandler);
             _registeredCharactersWindow = new RegisteredCharactersWindow(plugin, registrationService);
+            _debugWindow = new DebugWindow(autoApplyService);
         }
 
         public override void Draw()
@@ -30,7 +32,7 @@ namespace McdfExporter.Windows
             {
                 _exportWindow.Draw();
                 _registeredCharactersWindow.Draw();
-
+                _debugWindow.Draw();
                 ImGui.EndTabBar();
             }
         }

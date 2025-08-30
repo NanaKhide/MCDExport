@@ -1,6 +1,7 @@
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin.Services;
+using McdfExporter.Data;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -50,10 +51,40 @@ namespace McdfExporter.Services
             _framework.Update += OnFrameworkUpdate;
             _eventManager.OnMcdfApplicationCleanupRequested += OnCleanupRequested;
             _eventManager.OnCharacterUnregistered += OnCharacterUnregistered;
+            _eventManager.OnCharacterRegistered += OnCharacterRegistered;
 
             _ipcManager.Glamourer.GlamourerStateChanged += OnGlamourerStateChanged;
             _ipcManager.Glamourer.GPoseStateChanged += OnGposeStateChanged;
             _updateStopwatch.Start();
+        }
+
+        private void OnCharacterRegistered(RegisteredCharacter registeredCharacter)
+        {
+            var character = _objectTable
+                .OfType<IPlayerCharacter>()
+                .FirstOrDefault(p => p.Name.TextValue == registeredCharacter.Name && p.HomeWorld.Value.Name.ToString() == registeredCharacter.HomeWorld);
+
+            if (character != null && character.IsValid())
+            {
+                var worldName = character.HomeWorld.Value.Name.ToString();
+                var key = $"{character.Name.TextValue.ToLowerInvariant()}@{worldName.ToLowerInvariant()}";
+
+                if (!_activeApplications.ContainsKey(key) && !_processingCharacters.Contains(key))
+                {
+                    ApplyMcdfToCharacter(key, character, registeredCharacter.McdfFilePath);
+                }
+            }
+        }
+        public void ReapplyAllCharacters()
+        {
+            _log.Verbose("Reapplying all registered characters.");
+
+            foreach (var app in _activeApplications.Values.ToList())
+            {
+                CleanupApplication(app);
+            }
+            _activeApplications.Clear();
+            _processingCharacters.Clear();
         }
 
         public void Dispose()

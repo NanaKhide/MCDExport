@@ -43,7 +43,7 @@ namespace McdfExporter
             var charaDataFactory = new CharacterDataFactory(IpcManager);
             var charaFileHandler = new CharaDataFileHandler(charaDataFactory);
 
-            _mainWindow = new MainWindow(this, charaFileHandler, RegistrationService);
+            _mainWindow = new MainWindow(this, charaFileHandler, RegistrationService,_autoApplyService);
 
             WindowSystem.AddWindow(_mainWindow);
 
