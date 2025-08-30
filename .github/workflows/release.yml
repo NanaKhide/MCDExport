@@ -56,7 +56,7 @@ jobs:
                 tag: ${{ github.ref_name }}
                 allowUpdates: true
                 artifacts: "./MCDExport.zip"
-                generateReleaseNotes: true
+                generateReleaseNotes: false
                 updateOnlyUnreleased: false
 
             - name: Update repo.json
